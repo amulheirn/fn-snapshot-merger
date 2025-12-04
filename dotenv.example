@@ -1,0 +1,4 @@
+API_KEY=your_api_key_here
+API_SECRET=your_api_secret_here
+SOURCE_NETWORK_IDS=123,456,789
+TARGET_NETWORK_ID=999

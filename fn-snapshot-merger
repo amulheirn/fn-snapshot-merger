@@ -1,0 +1,138 @@
+import os
+import requests
+from datetime import datetime
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables
+load_dotenv()
+
+# Get configuration from .env
+API_KEY = os.getenv('API_KEY')
+API_SECRET = os.getenv('API_SECRET')
+SOURCE_NETWORK_IDS = [int(id.strip()) for id in os.getenv('SOURCE_NETWORK_IDS').split(',')]
+TARGET_NETWORK_ID = int(os.getenv('TARGET_NETWORK_ID'))
+
+BASE_URL = 'https://fwd.app/api'
+
+def get_auth():
+    """Return authentication tuple for requests"""
+    return (API_KEY, API_SECRET)
+
+def get_latest_snapshot_id(network_id):
+    """Get the latest processed snapshot ID for a given network"""
+    url = f'{BASE_URL}/networks/{network_id}/snapshots/latestProcessed'
+    
+    print(f'Fetching latest snapshot for network {network_id}...')
+    response = requests.get(url, auth=get_auth())
+    response.raise_for_status()
+    
+    snapshot_id = response.json().get('id')
+    print(f'  Found snapshot ID: {snapshot_id}')
+    return snapshot_id
+
+def export_snapshot(snapshot_id, download_dir='snapshots'):
+    """Export a snapshot and save the zip file"""
+    url = f'{BASE_URL}/snapshots/{snapshot_id}'
+    
+    # Create download directory if it doesn't exist
+    Path(download_dir).mkdir(exist_ok=True)
+    
+    print(f'Exporting snapshot {snapshot_id}...')
+    response = requests.get(url, auth=get_auth(), stream=True)
+    response.raise_for_status()
+    
+    # Save the zip file
+    filename = f'{download_dir}/snapshot_{snapshot_id}.zip'
+    with open(filename, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    
+    print(f'  Downloaded to {filename}')
+    return filename
+
+def import_snapshots(network_id, snapshot_files):
+    """Import multiple snapshots into the target network"""
+    url = f'{BASE_URL}/networks/{network_id}/snapshots'
+    
+    # Create timestamp for note
+    timestamp = datetime.now().strftime('%I:%M%p on %d %b %Y')
+    note = f'Merged at {timestamp}'
+    
+    print(f'\nImporting {len(snapshot_files)} snapshots to network {network_id}...')
+    
+    # Prepare files for upload
+    files = [('file', (os.path.basename(f), open(f, 'rb'), 'application/zip')) 
+             for f in snapshot_files]
+    
+    # Prepare form data
+    data = {'note': note}
+    
+    try:
+        response = requests.post(url, auth=get_auth(), files=files, data=data)
+        response.raise_for_status()
+        print(f'  Success! Import completed.')
+        print(f'  Note: {note}')
+        return response.json()
+    finally:
+        # Close all file handles
+        for _, file_tuple in files:
+            file_tuple[1].close()
+
+def main():
+    print('=== Forward Networks Snapshot Merger ===\n')
+    
+    # Validate configuration
+    if not API_KEY or not API_SECRET:
+        raise ValueError('API_KEY and API_SECRET must be set in .env file')
+    if not SOURCE_NETWORK_IDS:
+        raise ValueError('SOURCE_NETWORK_IDS must be set in .env file')
+    if not TARGET_NETWORK_ID:
+        raise ValueError('TARGET_NETWORK_ID must be set in .env file')
+    
+    print(f'Source networks: {SOURCE_NETWORK_IDS}')
+    print(f'Target network: {TARGET_NETWORK_ID}\n')
+    
+    # Step 1: Get latest snapshot IDs
+    snapshot_ids = []
+    for network_id in SOURCE_NETWORK_IDS:
+        try:
+            snapshot_id = get_latest_snapshot_id(network_id)
+            snapshot_ids.append(snapshot_id)
+        except requests.exceptions.RequestException as e:
+            print(f'  Error fetching snapshot for network {network_id}: {e}')
+            continue
+    
+    if not snapshot_ids:
+        print('\nNo snapshots found. Exiting.')
+        return
+    
+    print(f'\nFound {len(snapshot_ids)} snapshots to export.\n')
+    
+    # Step 2: Export all snapshots
+    downloaded_files = []
+    for snapshot_id in snapshot_ids:
+        try:
+            filename = export_snapshot(snapshot_id)
+            downloaded_files.append(filename)
+        except requests.exceptions.RequestException as e:
+            print(f'  Error exporting snapshot {snapshot_id}: {e}')
+            continue
+    
+    if not downloaded_files:
+        print('\nNo snapshots exported. Exiting.')
+        return
+    
+    print(f'\nExported {len(downloaded_files)} snapshots.\n')
+    
+    # Step 3: Import all snapshots to target network
+    try:
+        result = import_snapshots(TARGET_NETWORK_ID, downloaded_files)
+        print(f'\n=== Import Complete ===')
+    except requests.exceptions.RequestException as e:
+        print(f'\nError importing snapshots: {e}')
+        if hasattr(e.response, 'text'):
+            print(f'Response: {e.response.text}')
+
+if __name__ == '__main__':
+    main()
