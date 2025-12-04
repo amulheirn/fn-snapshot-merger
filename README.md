@@ -3,6 +3,9 @@ Andrew Mulheirn - Forward Networks - 4th December 2025
 
 A Python script to automatically export snapshots from multiple source networks and import them into a single target network.
 
+## Notes on Merging Snapshots
+Please see [this document](https://fwd.app/docs/application/getting_started/snapshots/#merge) for important details about snapshot merges.
+
 ## Prerequisites
 
 - Objects in the source networks must be unique.  For example 'router1' cannot exist in both source networks.
