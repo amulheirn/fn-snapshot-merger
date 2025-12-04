@@ -7,3 +7,4 @@ Thumbs.db
 _build
 .DS_Store
 *.html
+snapshots
