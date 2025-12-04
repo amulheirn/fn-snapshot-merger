@@ -160,6 +160,6 @@ tail -f /path/to/logs/snapshot_merge.log
 ```
 
 ## Support
-This script is provided with no warranty or support.
+This project is licensed under the terms of the MIT License. See LICENSE file for details.
 
 For issues with the Forward Networks API, consult the [Forward Networks API documentation](https://docs.fwd.app/latest/api-doc/index.html).
