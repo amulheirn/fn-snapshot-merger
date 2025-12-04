@@ -5,6 +5,7 @@ A Python script to automatically export snapshots from multiple source networks 
 
 ## Prerequisites
 
+- Objects in the source networks must be unique.  For example 'router1' cannot exist in both source networks.
 - Python 3.6 or higher
 - Forward Networks API credentials (key and secret)
 - Access to source and target networks
@@ -43,6 +44,8 @@ chmod 600 /path/to/.env
 - **API_SECRET**: Your Forward Networks API secret
 - **SOURCE_NETWORK_IDS**: Comma-separated list of source network IDs (integers)
 - **TARGET_NETWORK_ID**: The target network ID where snapshots will be imported (integer)
+
+Details on how to generate an API key are here: https://docs.fwd.app/latest/application/settings/personal/account/#api-tokens
 
 ## Usage
 
