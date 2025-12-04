@@ -32,6 +32,11 @@ SOURCE_NETWORK_IDS=123,456,789
 TARGET_NETWORK_ID=999
 ```
 
+Make sure to restrict access to the .env file:
+```
+chmod 600 /path/to/.env
+```
+
 ### Configuration Details
 
 - **API_KEY**: Your Forward Networks API key
