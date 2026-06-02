@@ -6,7 +6,7 @@ import threading
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask, Response, jsonify, render_template, request, stream_with_context
+from flask import Flask, Response, jsonify, render_template, request, send_from_directory, stream_with_context
 
 app = Flask(__name__)
 
@@ -19,18 +19,14 @@ _job_running = False
 
 
 class _CaptureStream:
-    """Routes stdout writes: captures from the job thread, passes others to original stdout."""
+    """Captures all stdout writes during a job run and routes them to the SSE queue."""
 
-    def __init__(self, fallback, out_queue, job_thread_id):
+    def __init__(self, fallback, out_queue):
         self._fallback = fallback
         self._queue = out_queue
-        self._job_thread_id = job_thread_id
         self._buf = ''
 
     def write(self, s):
-        if threading.get_ident() != self._job_thread_id:
-            self._fallback.write(s)
-            return
         self._buf += s
         while True:
             ni = self._buf.find('\n')
@@ -48,8 +44,12 @@ class _CaptureStream:
                 self._queue.put(('line', line.rstrip()))
 
     def flush(self):
-        if threading.get_ident() != self._job_thread_id:
-            self._fallback.flush()
+        self._fallback.flush()
+
+
+@app.route('/logo')
+def logo():
+    return send_from_directory('templates', 'forward_logo.png')
 
 
 @app.route('/')
@@ -71,9 +71,19 @@ def run():
 
         source_ids = request.form.get('source_ids', '').strip()
         target_id = request.form.get('target_id', '').strip()
+        api_key = request.form.get('api_key', '').strip()
+        api_secret = request.form.get('api_secret', '').strip()
 
         if not source_ids or not target_id:
             return jsonify({'error': 'Source IDs and target ID are required'}), 400
+
+        if api_key:
+            os.environ['API_KEY'] = api_key
+        if api_secret:
+            os.environ['API_SECRET'] = api_secret
+
+        if not os.getenv('API_KEY') or not os.getenv('API_SECRET'):
+            return jsonify({'error': 'API credentials are required. Enter your API key and secret in the form.'}), 400
 
         os.environ['SOURCE_NETWORK_IDS'] = source_ids
         os.environ['TARGET_NETWORK_ID'] = target_id
@@ -83,9 +93,8 @@ def run():
 
     def _run():
         global _job_running
-        job_id = threading.get_ident()
         old_stdout = sys.stdout
-        capture = _CaptureStream(sys.__stdout__, _job_queue, job_id)
+        capture = _CaptureStream(sys.__stdout__, _job_queue)
         sys.stdout = capture
         try:
             mod = importlib.util.module_from_spec(_spec)

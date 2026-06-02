@@ -1,4 +1,7 @@
 # Forward Networks Snapshot Merger
+
+![Forward Networks](templates/forward_logo.png)
+
 Andrew Mulheirn - Forward Networks - 2 June 2026
 
 A Python tool to automatically export snapshots from multiple source networks in Forward Enterprise, then import them into a single target network. This allows a Forward Enterprise administrator to have a number of regional networks with specific collectors, and a global network which is a merge of the regional ones, but does not have a collector.  This means the collection of data happens only once.

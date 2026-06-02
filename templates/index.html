@@ -81,17 +81,55 @@
     .l-error    { color: #f44336; }
     .l-done     { color: #66bb6a; font-weight: bold; margin-top: 6px; }
     .l-blank    { height: 0.5em; }
+    .logo { display: block; width: 180px; margin-bottom: 20px; }
+    .cred-section {
+      background: #1f1212;
+      border: 1px solid #5a2020;
+      border-radius: 6px;
+      padding: 14px 16px 18px;
+      margin-bottom: 24px;
+    }
+    .cred-section .cred-prompt {
+      color: #f44336;
+      font-size: 0.83em;
+      margin: 0 0 4px;
+    }
+    input[type=password] {
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      color: #e0e0e0;
+      padding: 9px 12px;
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.95em;
+      margin-top: 5px;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type=password]:focus { border-color: #4fc3f7; }
   </style>
 </head>
 <body>
+  <img src="/logo" alt="Forward Networks" class="logo">
   <h1>Forward Networks Snapshot Merger
     {% if has_credentials %}
       <span class="cred-status cred-ok">credentials loaded</span>
     {% else %}
-      <span class="cred-status cred-missing">no credentials — check .env</span>
+      <span class="cred-status cred-missing">no credentials</span>
     {% endif %}
   </h1>
   <div class="subtitle">Fetches latest snapshots from source networks, exports them, and imports into the target.</div>
+
+  {% if not has_credentials %}
+  <div class="cred-section">
+    <p class="cred-prompt">No API credentials found in .env — enter them below to run (not saved to disk).</p>
+    <label for="api_key">API Key</label>
+    <input type="text" id="api_key" name="api_key" placeholder="your api key" autocomplete="off" form="form">
+    <label for="api_secret">API Secret</label>
+    <input type="password" id="api_secret" name="api_secret" placeholder="your api secret" autocomplete="off" form="form">
+  </div>
+  {% endif %}
 
   <form id="form">
     <label for="source_ids">Source Network IDs</label>
