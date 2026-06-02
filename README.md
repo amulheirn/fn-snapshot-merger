@@ -1,7 +1,9 @@
 # Forward Networks Snapshot Merger
-Andrew Mulheirn - Forward Networks - 4th December 2025
+Andrew Mulheirn - Forward Networks - 2 June 2026
 
-A Python script to automatically export snapshots from multiple source networks and import them into a single target network.
+A Python tool to automatically export snapshots from multiple source networks in Forward Enterprise, then import them into a single target network. This allows a Forward Enterprise administrator to have a number of regional networks with specific collectors, and a global network which is a merge of the regional ones, but does not have a collector.  This means the collection of data happens only once.
+
+Can be run as a command-line script or as a browser-based web app.
 
 ## Notes on Merging Snapshots
 Please see [this document](https://fwd.app/docs/application/getting_started/snapshots/#merge) for important details about snapshot merges.
@@ -9,7 +11,7 @@ Please see [this document](https://fwd.app/docs/application/getting_started/snap
 ## Prerequisites
 
 - Objects in the source networks must be unique.  For example 'router1' cannot exist in both source networks.
-- Python 3.6 or higher
+- Python 3.8 or higher
 - Forward Networks API credentials (key and secret)
 - Access to source and target networks
 
@@ -19,11 +21,6 @@ Please see [this document](https://fwd.app/docs/application/getting_started/snap
 
 2. Install required dependencies:
 ```bash
-pip install requests python-dotenv
-```
-
-or 
-```
 pip install -r requirements.txt
 ```
 
@@ -52,19 +49,26 @@ Details on how to generate an API key are here: https://docs.fwd.app/latest/appl
 
 ## Usage
 
-### Manual Execution
+### Command Line
 
 Run the script directly:
 ```bash
-python fn-snapshot-merger.py
+python3 fn-snapshot-merger.py
 ```
-
-### Output
 
 The script will:
 1. Create a `snapshots/` directory to store downloaded files
 2. Display progress for each step (fetch, export, import)
 3. Add a timestamped note to the import (e.g., "Merged at 10:30AM on 03 Dec 2025")
+
+### Web UI
+
+Start the Flask app:
+```bash
+python3 app.py
+```
+
+Then open [http://localhost:5000](http://localhost:5000) in your browser. The form is pre-filled from your `.env` file — you can adjust the source and target network IDs before each run. Output streams live to the page as the job runs. API credentials are always read from `.env` and are not exposed in the UI.
 
 ## Setting Up as a Cron Job
 
