@@ -1,3 +1,9 @@
+# Put your own values in this file and save it as .env
+# This should ensure that secrets are never accidentally
+# pushed into git.
+# You should run chmod 600 /path/to/.env on this file 
+# so that only you can read its contents.
+
 API_KEY=your_api_key_here
 API_SECRET=your_api_secret_here
 SOURCE_NETWORK_IDS=123,456,789
